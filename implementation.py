@@ -2,7 +2,7 @@
 This is the only file you should change in your submission!
 """
 from basicplayer import basic_evaluate, minimax, get_all_next_moves, is_terminal
-from util import memoize, run_search_function
+from util import memoize, run_search_function, INFINITY, NEG_INFINITY
 
 
 # TODO Uncomment and fill in your information here. Think of a creative name that's relatively unique.
@@ -31,6 +31,38 @@ def focused_evaluate(board):
 # You can test this player by choosing 'quick' in the main program.
 quick_to_win_player = lambda board: minimax(board, depth=4,
                                             eval_fn=focused_evaluate)
+
+def alpha_beta_search_find_board_value(board, depth,
+                      eval_fn,
+                      get_next_moves_fn=get_all_next_moves,
+                      is_terminal_fn=is_terminal, parent_alpha, parent_beta):
+
+    if is_terminal_fn(depth, board):
+        val = alpha = beta = eval_fn(board)
+        return val, alpha, beta 
+
+    isMaxNode = (depth%2 == 0)
+    alpha = NEG_INFINITY
+    beta = INFINITY
+    best_val = None
+
+    for move, new_board in get_next_moves_fn(board):
+        if beta < alpha: break
+        
+        child_value, child_alpha, child_beta = minimax_find_board_value(new_board, depth-1, eval_fn,
+                                            get_next_moves_fn, is_terminal_fn, alpha, beta)
+        val = -1 * child_value
+        if isMaxNode and val > alpha:
+            alpha = val
+        elif not maxNode and val < beta:
+            beta = val
+    
+        if best_val is None or val > best_val:
+            best_val = val
+
+    alpha = beta = best_val
+
+    return best_val, alpha, beta
 
 
 # TODO Write an alpha-beta-search procedure that acts like the minimax-search
@@ -64,7 +96,22 @@ def alpha_beta_search(board, depth,
        is a function that checks whether to statically evaluate
        a board/node (hence terminating a search branch).
     """
-    raise NotImplementedError
+    best_val = None
+    alpha = NEG_INFINITY
+    beta = INFINITY
+    
+    for move, new_board in get_next_moves_fn(board):
+        child_value, child_alpha, child_beta =  alpha_beta_search_find_board_value(new_board, depth-1, eval_fn,
+                                            get_next_moves_fn,
+                                            is_terminal_fn, alpha, beta)
+        val = -1 * child_value
+        if best_val is None or val > best_val[0]:
+            best_val = (val, move, new_board)
+            
+    if verbose:
+        print("ALPHA-BETA SEARCH: Decided on column {} with rating {}".format(best_val[1], best_val[0]))
+
+    return best_val[1]
 
 
 # Now you should be able to search twice as deep in the same amount of time.
