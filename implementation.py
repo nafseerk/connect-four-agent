@@ -33,36 +33,43 @@ quick_to_win_player = lambda board: minimax(board, depth=4,
                                             eval_fn=focused_evaluate)
 
 def alpha_beta_search_find_board_value(board, depth,
+                      alpha, beta, isMaxNode,
                       eval_fn,
                       get_next_moves_fn=get_all_next_moves,
-                      is_terminal_fn=is_terminal, parent_alpha, parent_beta):
+                      is_terminal_fn=is_terminal):
 
+    #For terminal node, just simply return the utility of the node
     if is_terminal_fn(depth, board):
-        val = alpha = beta = eval_fn(board)
-        return val, alpha, beta 
+        return eval_fn(board)
 
-    isMaxNode = (depth%2 == 0)
-    alpha = NEG_INFINITY
-    beta = INFINITY
-    best_val = None
+    if isMaxNode:
+        best_val = NEG_INFINITY
+        for move, new_board in get_next_moves_fn(board):
+            val = alpha_beta_search_find_board_value(new_board, depth-1, alpha, beta, False, eval_fn,
+                                                get_next_moves_fn, is_terminal_fn)
+            if val > best_val:
+                best_val = val
+                
+            if best_val > alpha:
+                alpha = best_val
 
-    for move, new_board in get_next_moves_fn(board):
-        if beta < alpha: break
-        
-        child_value, child_alpha, child_beta = minimax_find_board_value(new_board, depth-1, eval_fn,
-                                            get_next_moves_fn, is_terminal_fn, alpha, beta)
-        val = -1 * child_value
-        if isMaxNode and val > alpha:
-            alpha = val
-        elif not maxNode and val < beta:
-            beta = val
-    
-        if best_val is None or val > best_val:
-            best_val = val
+            if beta <= best_val:
+                break                
+    else:
+        best_val = INFINITY
+        for move, new_board in get_next_moves_fn(board):
+            val = alpha_beta_search_find_board_value(new_board, depth-1, alpha, beta, True, eval_fn,
+                                            get_next_moves_fn, is_terminal_fn)
+            if val < best_val:
+                best_val = val
+                
+            if best_val < beta:
+                beta = best_val
 
-    alpha = beta = best_val
+            if alpha >= best_val:
+                break
 
-    return best_val, alpha, beta
+    return best_val
 
 
 # TODO Write an alpha-beta-search procedure that acts like the minimax-search
@@ -78,7 +85,7 @@ def alpha_beta_search_find_board_value(board, depth,
 def alpha_beta_search(board, depth,
                       eval_fn,
                       get_next_moves_fn=get_all_next_moves,
-                      is_terminal_fn=is_terminal):
+                      is_terminal_fn=is_terminal, verbose=True):
     """
      board is the current tree node.
 
@@ -99,14 +106,20 @@ def alpha_beta_search(board, depth,
     best_val = None
     alpha = NEG_INFINITY
     beta = INFINITY
+    isMaxNode = False
     
     for move, new_board in get_next_moves_fn(board):
-        child_value, child_alpha, child_beta =  alpha_beta_search_find_board_value(new_board, depth-1, eval_fn,
+        val = alpha_beta_search_find_board_value(new_board, depth - 1, alpha, beta, isMaxNode, eval_fn,
                                             get_next_moves_fn,
-                                            is_terminal_fn, alpha, beta)
-        val = -1 * child_value
+                                            is_terminal_fn)
         if best_val is None or val > best_val[0]:
             best_val = (val, move, new_board)
+                
+        if best_val[0] > alpha:
+            alpha = best_val[0]
+
+        if beta <= best_val[0]:
+            break
             
     if verbose:
         print("ALPHA-BETA SEARCH: Decided on column {} with rating {}".format(best_val[1], best_val[0]))
@@ -117,7 +130,7 @@ def alpha_beta_search(board, depth,
 # Now you should be able to search twice as deep in the same amount of time.
 # (Of course, this alpha-beta-player won't work until you've defined alpha_beta_search.)
 def alpha_beta_player(board):
-    return alpha_beta_search(board, depth=8, eval_fn=focused_evaluate)
+    return alpha_beta_search(board, depth=6, eval_fn=basic_evaluate)
 
 
 # This player uses progressive deepening, so it can kick your ass while
