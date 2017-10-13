@@ -32,6 +32,15 @@ def focused_evaluate(board):
 quick_to_win_player = lambda board: minimax(board, depth=4,
                                             eval_fn=focused_evaluate)
 
+def get_all_next_moves_for_alpha_beta(board):
+    column_order = [3, 2, 4, 1, 5, 0, 6]
+    ordered_moves = []
+    for column in column_order:
+        for move in get_all_next_moves(board):
+            if move[0] == column:
+                ordered_moves.append(move)
+    return ordered_moves
+
 def alpha_beta_search_find_board_value(board, depth,
                       alpha, beta, isMaxNode,
                       eval_fn,
@@ -130,7 +139,7 @@ def alpha_beta_search(board, depth,
 # Now you should be able to search twice as deep in the same amount of time.
 # (Of course, this alpha-beta-player won't work until you've defined alpha_beta_search.)
 def alpha_beta_player(board):
-    return alpha_beta_search(board, depth=6, eval_fn=basic_evaluate)
+    return alpha_beta_search(board, depth=8, eval_fn=basic_evaluate, get_next_moves_fn=get_all_next_moves_for_alpha_beta)
 
 
 # This player uses progressive deepening, so it can kick your ass while
