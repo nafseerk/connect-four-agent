@@ -67,7 +67,10 @@ def alpha_beta_search_find_board_value(board, depth,
 
     #For terminal node, just simply return the utility of the node
     if is_terminal_fn(depth, board):
-        return eval_fn(board)
+        if isMaxNode:
+            return eval_fn(board)
+        else:
+            return -1 * eval_fn(board)
 
     if isMaxNode:
         best_val = NEG_INFINITY
