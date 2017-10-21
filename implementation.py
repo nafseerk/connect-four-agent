@@ -24,7 +24,25 @@ def focused_evaluate(board):
     A return value >= 1000 means that the current player has won;
     a return value <= -1000 means that the current player has lost
     """
-    raise NotImplementedError
+    if board.is_game_over():
+        # If the game has been won, we know that it must have been
+        # won or ended by the previous move.
+        # The previous move was made by our opponent.
+        # The score is proportional to number of remaining places to fill
+        # So more remaining places means early in the game and
+        # lesser remaining pieces in late in the game
+        score = -1000 * (42 - board.num_tokens_on_board())       
+    else:
+        score = board.longest_chain(board.get_current_player_id()) * 10
+        # Prefer having your pieces in the center of the board.
+        for row in range(6):
+            for col in range(7):
+                if board.get_cell(row, col) == board.get_current_player_id():
+                    score -= abs(3-col)
+                elif board.get_cell(row, col) == board.get_other_player_id():
+                    score += abs(3-col)
+
+    return score
 
 
 # Create a "player" function that uses the focused_evaluate function
