@@ -1,10 +1,10 @@
 """
 This is the only file you should change in your submission!
 """
-from connectfour import ConnectFourBoard, human_player, run_game
+from connectfour import ConnectFourBoard
 from basicplayer import basic_evaluate, minimax, get_all_next_moves, is_terminal
 from util import memoize, run_search_function, INFINITY, NEG_INFINITY
-import pprint
+
 
 # TODO Uncomment and fill in your information here. Think of a creative name that's relatively unique.
 # We may compete your agent against your classmates' agents as an experiment (not for marks).
@@ -174,63 +174,65 @@ def ab_iterative_player(board):
 # By providing a different function, you should be able to beat
 # simple-evaluate (or focused-evaluate) while searching to the same depth.
 
-def get_direct_win_count(board):
-    directWinCount = 0
-    for col in range(7):
-        colHeight = board.get_height_of_column(col)
-        canPlay = colHeight != -1
-        if canPlay:
-            if colHeight == 6: colHeight -= 1
-            directWinCount += int(board.do_move(col)._max_length_from_cell(colHeight, col) == 4)
-    return directWinCount
+def is_empty(board, row, col):
+    #Cell outside board dimensions
+    if row < 0 or row > 5 or col < 0 or col > 6:
+        return False
+    
+    return board.get_cell(row, col) == 0
 
+def update_threats(row, col, odd_threats, even_threats):
+    if row % 2 == 0:
+        even_threats.append((row, col))
+    else:
+        odd_threats.append((row, col))
+
+#Given a chain of 3 cells, updates odd and even threats based on chain_type:
+# 0 - Horizontal threat
+# 1 - Vertical threat
+# 2 - downward diagonal threat
+# 3 - upward diagonal threat
+def get_threats_around_chain(board, chain, chain_type, odd_threats, even_threats):
+    positions = []
+    if chain_type == 0:
+        #Two possible threats for horizontal chain
+        positions.append((chain[0][0], chain[0][1] + 1))
+        positions.append((chain[-1][0], chain[-1][1] - 1))
+    elif chain_type == 1:
+        #One possible threat for vertical chain
+        positions.append((chain[-1][0] - 1, chain[-1][1]))
+    elif chain_type == 2:
+        #Two possible threats for downward diagonal
+        positions.append((chain[0][0] + 1, chain[0][1] + 1))
+        positions.append((chain[-1][0] - 1, chain[-1][1] - 1))
+    elif chain_type == 3:
+        #Two possible threats for upward diagonal
+        positions.append((chain[0][0] - 1, chain[0][1] + 1))
+        positions.append((chain[-1][0] + 1, chain[-1][1] - 1))
+
+    for position in positions:
+        if is_empty(board, position[0], position[1]):
+            update_threats(position[0], position[1], odd_threats, even_threats)
+            
+        
+#Returns a tuple of all odd and even threats in the board for the current player
 def get_threats(board):
     odd_threats = []
     even_threats = []
     for chain in board.chain_cells(board.get_current_player_id()):
         if len(chain) == 3:
             if chain[0][0] == chain[1][0]: #horizontal
-                if check_empty(board, chain[0][0], chain[0][1] + 1):
-                    if chain[0][0] % 2 == 0:
-                        even_threats.append((chain[0][0], chain[0][1] + 1))
-                    else:
-                        odd_threats.append((chain[0][0], chain[0][1] + 1))
-                if check_empty(board, chain[-1][0], chain[-1][1] - 1):
-                    if chain[-1][0] % 2 == 0:
-                       even_threats.append((chain[-1][0], chain[-1][1] - 1)) 
-                    else:
-                       odd_threats.append((chain[-1][0], chain[-1][1] - 1))                        
+                get_threats_around_chain(board, chain, 0, odd_threats, even_threats)                        
             elif chain[0][1] == chain[1][1]: #vertical
-                if check_empty(board, chain[-1][0] - 1, chain[-1][1]):
-                    if (chain[-1][0] - 1) % 2 == 0:
-                        even_threats.append((chain[-1][0] - 1, chain[-1][1]))
-                    else:
-                        odd_threats.append((chain[-1][0] - 1, chain[-1][1]))
-            elif chain[0][0] - 1 == chain[1][0] and chain[0][1] - 1 ==  chain[1][1]: #diagonal down
-                if check_empty(board, chain[0][0] + 1, chain[0][1] + 1):
-                    if (chain[0][0] + 1) % 2 == 0:
-                        even_threats.append((chain[0][0] + 1, chain[0][1] + 1))
-                    else:
-                        odd_threats.append((chain[0][0] + 1, chain[0][1] + 1))
-                if check_empty(board, chain[-1][0] - 1, chain[-1][1] - 1):
-                    if (chain[-1][0] - 1) % 2 == 0:
-                        even_threats.append((chain[-1][0] - 1, chain[-1][1] - 1))
-                    else:
-                        odd_threats.append((chain[-1][0] - 1, chain[-1][1] - 1))
-            elif chain[0][0] + 1 == chain[1][0] and chain[0][1] - 1 ==  chain[1][1]: #diagonal up
-                if check_empty(board, chain[0][0] - 1, chain[0][1] + 1):
-                    if (chain[0][0] - 1) % 2 == 0:
-                        even_threats.append((chain[0][0] - 1, chain[0][1] + 1))
-                    else:
-                        odd_threats.append((chain[0][0] - 1, chain[0][1] + 1))
-                if check_empty(board, chain[-1][0] + 1, chain[-1][1] - 1):
-                    if (chain[-1][0] + 1) % 2 == 0:
-                        even_threats.append((chain[-1][0] + 1, chain[-1][1] - 1))
-                    else:
-                        odd_threats.append((chain[-1][0] + 1, chain[-1][1] - 1))
+                get_threats_around_chain(board, chain, 1, odd_threats, even_threats)
+            elif chain[0][0] - 1 == chain[1][0] and chain[0][1] - 1 ==  chain[1][1]: #downward diagonal
+                get_threats_around_chain(board, chain, 2, odd_threats, even_threats)
+            elif chain[0][0] + 1 == chain[1][0] and chain[0][1] - 1 ==  chain[1][1]: #upward diagonal
+                get_threats_around_chain(board, chain, 3, odd_threats, even_threats)
+
     return odd_threats, even_threats
 
-def get_winner(board):
+def get_strategic_winner(board):
     boardForP1 = ConnectFourBoard(board._board_array, current_player = 1)
     boardForP2 = ConnectFourBoard(board._board_array, current_player = 2)
     
@@ -242,10 +244,10 @@ def get_winner(board):
     MIXED = len(set(P1_threats[0]).intersection(P2_threats[0]))
 
     if ODD < 0:
-        return 1
+        return 1  
     elif ODD == 0:
-        if MIXED % 2 != 0:
-            return 1
+        if MIXED % 2 != 0: 
+            return 1 
         else:
             if MIXED == 0:
                 if EVEN == 0:
@@ -265,14 +267,7 @@ def get_winner(board):
         else:
             return 1
     elif ODD > 1:
-        return 2
-        
-    
-def check_empty(board, row, col):
-    if row < 0 or row > 5 or col < 0 or col > 6:
-        return False
-    return board.get_cell(row, col) == 0
-    
+        return 2   
 
 def better_evaluate(board):
     if board.is_game_over():
@@ -285,27 +280,19 @@ def better_evaluate(board):
         score = -1000 * (board.board_width * board.board_height - board.num_tokens_on_board())
     else:
         score = board.longest_chain(board.get_current_player_id()) * 100
-        winner = get_winner(board)
+        winner = get_strategic_winner(board)
         if winner == board.get_current_player_id():
             score += 100
         elif winner == board.get_other_player_id():
             score -= 100
             
-        #dwScore = get_direct_win_count(board) * (board.board_width * board.board_height - board.num_tokens_on_board()) / 4
-        #boardForOpponent = ConnectFourBoard(board._board_array, board_already_won=board._is_win, current_player = board.get_other_player_id())
-        #dlScore = get_direct_win_count(boardForOpponent) * (boardForOpponent.board_width * boardForOpponent.board_height - boardForOpponent.num_tokens_on_board()) / 4
-        #print('Direct-Win score = %d' % dwScore)
-        #score += dwScore
-        #score -= dlScore
-        #print('Direct Wins = %d' % directWinCount)
-            
         # Prefer having your pieces in the center of the board.
         for row in range(6):
             for col in range(7):
                 if board.get_cell(row, col) == board.get_current_player_id():
-                    score -= abs(3-col)
+                    score -= 50*abs(3-col)
                 elif board.get_cell(row, col) == board.get_other_player_id():
-                    score += abs(3-col)
+                    score += 50*abs(3-col)
     return score                   
 
 # Comment this line after you've fully implemented better_evaluate
@@ -319,22 +306,4 @@ better_evaluate = memoize(better_evaluate)
 def my_player(board):
     return run_search_function(board, search_fn=alpha_beta_search, eval_fn=better_evaluate, timeout=5)
 
-# my_player = lambda board: alpha_beta_search(board, depth=4, eval_fn=better_evaluate)
-
-##if __name__ == '__main__':
-##    board = ConnectFourBoard(board_array=
-##                                                      ((0, 0, 0, 0, 0, 0, 0),
-##                                                       (0, 0, 0, 0, 0, 0, 0),
-##                                                       (0, 0, 0, 0, 0, 0, 0),
-##                                                       (0, 0, 0, 0, 0, 0, 0),
-##                                                       (0, 0, 2, 0, 0, 0, 0),
-##                                                       (0, 0, 1, 0, 0, 0, 0),
-##                                                       ),
-##                                                      current_player=1)
-##    print(get_winner(board))
-##    #pprint.pprint(get_threats(board))
-##    #boardForOpponent = ConnectFourBoard(board._board_array, current_player = board.get_other_player_id())
-##    #pprint.pprint(get_threats(boardForOpponent))
-##    #pprint.pprint(board._chain_sets_from_cell(4,2))
-##    
-    
+# my_player = lambda board: alpha_beta_search(board, depth=4, eval_fn=better_evaluate)    
