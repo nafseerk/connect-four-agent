@@ -10,9 +10,9 @@ from util import memoize, run_search_function, INFINITY, NEG_INFINITY
 # We may compete your agent against your classmates' agents as an experiment (not for marks).
 # Are you interested in participating if this competition? Set COMPETE=TRUE if yes.
 
-# STUDENT_ID = 12345678
-# AGENT_NAME =
-# COMPETE = False
+STUDENT_ID = 20706783
+AGENT_NAME = 'Terminator'
+COMPETE = True
 
 # TODO Change this evaluation function so that it tries to win as soon as possible
 # or lose as late as possible, when it decides that one side is certain to win.
