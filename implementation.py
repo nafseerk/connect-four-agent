@@ -174,6 +174,7 @@ def ab_iterative_player(board):
 # By providing a different function, you should be able to beat
 # simple-evaluate (or focused-evaluate) while searching to the same depth.
 
+#Determines if a slot on the board is open 
 def is_empty(board, row, col):
     #Cell outside board dimensions
     if row < 0 or row > 5 or col < 0 or col > 6:
@@ -181,6 +182,7 @@ def is_empty(board, row, col):
     
     return board.get_cell(row, col) == 0
 
+#Classify a threat as odd or even
 def update_threats(row, col, odd_threats, even_threats):
     if row % 2 == 0:
         even_threats.append((row, col))
