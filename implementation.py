@@ -51,14 +51,6 @@ def focused_evaluate(board):
 quick_to_win_player = lambda board: minimax(board, depth=4,
                                             eval_fn=focused_evaluate)
 
-def get_all_next_moves_for_alpha_beta(board):
-    column_order = [3, 2, 4, 1, 5, 0, 6]
-    ordered_moves = []
-    for column in column_order:
-        for move in get_all_next_moves(board):
-            if move[0] == column:
-                ordered_moves.append(move)
-    return ordered_moves
 
 def alpha_beta_search_find_board_value(board, depth,
                       alpha, beta, isMaxNode,
