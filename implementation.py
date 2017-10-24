@@ -232,6 +232,9 @@ def get_threats(board):
 
     return odd_threats, even_threats
 
+#Returns the id of the player who is likely to win based on the
+#number of odd threats, even threats and shared threats
+#Returns 0 if its a tie
 def get_strategic_winner(board):
     boardForP1 = ConnectFourBoard(board._board_array, current_player = 1)
     boardForP2 = ConnectFourBoard(board._board_array, current_player = 2)
@@ -240,12 +243,16 @@ def get_strategic_winner(board):
     P2_threats = get_threats(boardForP2)
     
     ODD = len(P2_threats[0]) - len(P1_threats[0])
+    
+    #Even threats matter only to Player 2
     EVEN = len(P2_threats[1])
+    
+    #MIXED gives number of shared odd threats    
     MIXED = len(set(P1_threats[0]).intersection(P2_threats[0]))
 
-    if ODD < 0:
+    if ODD < 0: #P1 has more odd threats
         return 1  
-    elif ODD == 0:
+    elif ODD == 0: #P1 and P2 has same no of odd threats
         if MIXED % 2 != 0: 
             return 1 
         else:
@@ -256,7 +263,7 @@ def get_strategic_winner(board):
                     return 2
             elif MIXED > 0:
                 return 2
-    elif ODD == 1:
+    elif ODD == 1: #P2 has one odd threat more than P1
         if MIXED == 0:
             if EVEN == 0:
                 return 0
@@ -266,7 +273,7 @@ def get_strategic_winner(board):
             return 2
         else:
             return 1
-    elif ODD > 1:
+    elif ODD > 1: #P2 has greater than 1 odd threats than P1
         return 2   
 
 def better_evaluate(board):
