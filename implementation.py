@@ -153,7 +153,7 @@ def alpha_beta_search(board, depth,
 # Now you should be able to search twice as deep in the same amount of time.
 # (Of course, this alpha-beta-player won't work until you've defined alpha_beta_search.)
 def alpha_beta_player(board):
-    return alpha_beta_search(board, depth=8, eval_fn=focused_evaluate, get_next_moves_fn=get_all_next_moves_for_alpha_beta)
+    return alpha_beta_search(board, depth=8, eval_fn=focused_evaluate)
 
 
 # This player uses progressive deepening, so it can kick your ass while
